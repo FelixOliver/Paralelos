@@ -10,45 +10,47 @@ double f(double x); /* funcion*/
 
 
 int main(int argc, char** argv) {
-    int         my_rank;   /* My process rank           */
-    int         p;         /* The number of processes   */
-    double      a;         /* Left endpoint             */
-    double      b;         /* Right endpoint            */
-    int         n;         /* Number of trapezoids      */
-    double      h;         /* Trapezoid base length     */
-    double      local_a;   /* Left endpoint my process  */
-    double      local_b;   /* Right endpoint my process */
-    int         local_n;   /* Number of trapezoids for  */
-                           /* my calculation            */
-    double      my_area;   /* Integral over my interval */
-    double      total;     /* Total area                */
-    int         source;    /* Process sending area      */
-    int         dest = 0;  /* All messages go to 0      */
+    int         my_rank;   
+    int         p;         
+    double      a;         
+    double      b;         
+    int         n;         
+    double      h;         
+    double      local_a;   
+    double      local_b;   
+    int         local_n;   
+                           
+    double      my_area;   
+    double      total;     
+    int         source;    
+    int         dest = 0;  
     int         tag = 0;
     MPI_Status  status;
 
-    /* Let the system do what it needs to start up MPI */
+    /* inicio MPI */
     MPI_Init(&argc, &argv);
 
     /* Get my process rank */
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-    /* Find out how many processes are being used */
+    /* size procsssss */
     MPI_Comm_size(MPI_COMM_WORLD, &p);
+    printf("size %d \n",p);
+    printf("rank %d \n",my_rank);
 
     Get_data(p, my_rank, &a, &b, &n);
 
-    h = (b-a)/n;    /* h is the same for all processes */
-    local_n = n/p;  /* So is the number of trapezoids */
+    h = (b-a)/n;    /* h es la misma para cualquier proceso*/
+    local_n = n/p;  /* n para cada proceso */
 
-    /* Length of each process' interval of
-     * integration = local_n*h.  So my interval
-     * starts at: */
+    /* para cada proceso dividimos a y b */
     local_a = a + my_rank*local_n*h;
     local_b = local_a + local_n*h;
+    printf("local a: %f ,local b: %f ,n: %d \n",local_a,local_b,local_n );
+
     my_area = Trap(local_a, local_b, local_n, h);
 
-    /* Add up the areas calculated by each process */
+    /* calcula area para cada proceso */
     if (my_rank == 0) {
         total = my_area;
         for (source = 1; source < p; source++) {
@@ -61,7 +63,7 @@ int main(int argc, char** argv) {
             tag, MPI_COMM_WORLD);
     }
 
-    /* Print the result */
+    /* imprime area */
     if (my_rank == 0) {
         printf("With n = %d trapezoids, our estimate\n",
             n);
@@ -69,19 +71,14 @@ int main(int argc, char** argv) {
             a, b, total);
     }
 
-    /* Shut down MPI */
+    
     MPI_Finalize();
 
     return 0;
 } /*  main  */
 
-/*------------------------------------------------------------------
- * Function:     Get_data
- * Purpose:      Read in the data on process 0 and send to other
- *               processes
- * Input args:   p, my_rank
- * Output args:  a_p, b_p, n_p
- */
+
+
 void Get_data(int p, int my_rank, double* a_p, double* b_p, int* n_p) {
    int        q;
    MPI_Status status;
@@ -100,25 +97,13 @@ void Get_data(int p, int my_rank, double* a_p, double* b_p, int* n_p) {
       MPI_Recv(b_p, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
       MPI_Recv(n_p, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
    }
-}  /* Get_data */
+} 
 
-/*------------------------------------------------------------------
- * Function:     Trap
- * Purpose:      Estimate a definite area using the trapezoidal
- *               rule
- * Input args:   local_a (my left endpoint)
- *               local_b (my right endpoint)
- *               local_n (my number of trapezoids)
- *               h (stepsize = length of base of trapezoids)
- * Return val:   Trapezoidal rule estimate of area from
- *               local_a to local_b
- */
-double Trap(
-          double  local_a   /* in */,
-          double  local_b   /* in */,
-          int     local_n   /* in */,
-          double  h         /* in */) {
-    double my_area;   /* Store my result in my_area  */
+
+double Trap(double  local_a  ,double  local_b  ,int local_n  ,double  h) {
+
+
+    double my_area;   
     double x;
     int i;
 
@@ -131,17 +116,15 @@ double Trap(
     my_area = my_area*h;
 
     return my_area;
-} /*  Trap  */
+} 
 
-/*------------------------------------------------------------------
- * Function:    f
- * Purpose:     Compute value of function to be integrated
- * Input args:  x
- */
+
 double f(double x) {
     double return_val;
 
-    return_val = x*x + 1.0;
-
+    //return_val = x*x + 1.0;
+    return_val = 3*x;
     return return_val;
 } /* f */
+
+    //a=0 , b=2 , n=6

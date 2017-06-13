@@ -34,6 +34,84 @@ float compute_avg(float *array, int num_elements) {
   return sum / num_elements;
 }
 
+//leer vector mpi scatter
+void Read vector(double local a[] ,int local n, int n,char vec name[], int my rank,MPI Comm comm ) {
+  double∗ a = NULL;
+  int i;
+
+  if (my rank == 0) {
+    a = malloc(n∗sizeof(double));
+    printf("Enter the vector %s\n", vec name);
+    for (i = 0; i < n; i++)
+        scanf("%lf", &a[i]);
+    MPI Scatter(a, local n, MPI DOUBLE, local a, local n,
+    MPI DOUBLE, 0, comm);
+  free(a);
+  } 
+  else {
+    MPI Scatter(a, local n, MPI DOUBLE, local a, local n,
+    MPI DOUBLE, 0, comm);
+
+    }
+
+}
+
+// gather
+
+void Print vector( double local_b[],
+                    int local_n,
+                    int n, 
+                    char title[], 
+                    int my_rank, 
+                    MPI_Comm comm
+                  ) {
+  double∗ b = NULL;
+  int i;
+
+  if (my rank == 0) {
+      b = malloc(n∗sizeof(double));
+      MPI Gather(local b, local n, MPI DOUBLE, b, local n,
+      MPI DOUBLE, 0, comm);
+      printf("%s\n", title);
+      for (i = 0; i < n; i++)
+          printf("%f ", b[i]);
+      printf("\n");
+      free(b);
+  } 
+  else {
+      MPI Gather(local b, local n, MPI DOUBLE, b, local n,
+      MPI DOUBLE, 0, comm);
+  }
+
+}
+
+// allgather
+
+void Mat vect mult(   double local_A[], 
+                      double local_x[], 
+                      double local_y[], 
+                      int local_m, 
+                      int n, 
+                      int local_n, 
+                      MPI_Comm comm)
+{ 
+    
+    double *x;
+    int local_i, j;
+    int local_ok = 1;
+
+    x = malloc(n∗sizeof(double));
+    MPI Allgather(local_x, local_n, MPI_DOUBLE,
+    x, local_n, MPI_DOUBLE, comm);
+    
+    for (local i = 0; local i < local m; local i++) {
+        local y[local i] = 0.0;
+        for (j = 0; j < n; j++)
+              local y[local i] += local A[local i∗n+j]∗x[j];
+    }
+    free(x);
+}
+
 int main(int argc, char** argv) {
   if (argc != 2) {
     fprintf(stderr, "Usage: avg num_elements_per_proc\n");
