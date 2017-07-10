@@ -35,6 +35,7 @@ __global__ void mult_matrix(int a[],int b[], int c[],int fila,int columna)
         }
 }
 
+
 __global__ void mult_matrix_tile(int a[], int b[], int c[],int fila,int columna){
         __shared__ int a_ds[tile_width][tile_width];
         __shared__ int b_ds[tile_width][tile_width];
@@ -59,6 +60,54 @@ __global__ void mult_matrix_tile(int a[], int b[], int c[],int fila,int columna)
                 __syncthreads();
         }
         c[row*fila+col] = Pvalue;
+}
+
+__global__ void mult_matrix_tile_2(int a[], int b[], int c[],int fila,int columna){
+        __shared__ int a_ds[tile_width][tile_width];
+        __shared__ int b_ds_0[tile_width][tile_width];
+        __shared__ int b_ds_1[tile_width][tile_width];
+        __shared__ int b_ds_2[tile_width][tile_width];
+        __shared__ int b_ds_3[tile_width][tile_width];
+
+        const uint bx = blockIdx.x; 
+        const uint by=blockIdx.y;
+        
+        const uint tx = threadIdx.x; 
+        const uint ty=threadIdx.y;
+
+        const uint row = by * tile_width + ty;
+
+        const uint col_0 = (4*bx+0 )* tile_width + tx;
+        const uint col_1 = (4*bx+1 )* tile_width + tx;
+        const uint col_2 = (4*bx+2 )* tile_width + tx;
+        const uint col_3 = (4*bx+3 )* tile_width + tx;
+
+
+        float Pvalue_0 = 0.0f, Pvalue_1 = 0.0f, Pvalue_2 = 0.0f, Pvalue_3 = 0.0f; 
+        for(uint ph=0;ph<fila/tile_width;++ph)
+        {
+                a_ds[ty][tx] = a[row*fila+ ph*tile_width + tx];
+
+                b_ds_0[ty][tx] = b[(ph*tile_width+ty)*fila+col_0];
+                b_ds_1[ty][tx] = b[(ph*tile_width+ty)*fila+col_1];
+                b_ds_2[ty][tx] = b[(ph*tile_width+ty)*fila+col_2];
+                b_ds_3[ty][tx] = b[(ph*tile_width+ty)*fila+col_3];
+                
+                __syncthreads();
+
+                for(uint k=0;k<tile_width;++k)
+                {
+                        Pvalue_0 += a_ds[ty][k]*b_ds_0[k][tx];
+                        Pvalue_1 += a_ds[ty][k]*b_ds_1[k][tx];
+                        Pvalue_2 += a_ds[ty][k]*b_ds_2[k][tx];
+                        Pvalue_3 += a_ds[ty][k]*b_ds_3[k][tx];
+                }
+                __syncthreads();
+        }
+        c[row*fila+col_0] = Pvalue_0;
+        c[row*fila+col_1] = Pvalue_1;
+        c[row*fila+col_2] = Pvalue_2;
+        c[row*fila+col_3] = Pvalue_3;
 }
 
 void llenar_random_matrix(int a[],int f ,int c)
