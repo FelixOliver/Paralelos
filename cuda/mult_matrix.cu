@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define m 2048
-#define n 2048
+#define m 1024
+#define n 1024
 //#define size 5
 
 #define tile_width 16
@@ -62,7 +62,7 @@ __global__ void mult_matrix_tile(int a[], int b[], int c[],int fila,int columna)
         c[row*fila+col] = Pvalue;
 }
 
-__global__ void mult_matrix_tile_2(int a[], int b[], int c[],int fila,int columna){
+__global__ void mult_matrix_tile_4(int a[], int b[], int c[],int fila,int columna){
         __shared__ int a_ds[tile_width][tile_width];
         __shared__ int b_ds_0[tile_width][tile_width];
         __shared__ int b_ds_1[tile_width][tile_width];
@@ -185,7 +185,8 @@ int main(int argc, char * argv[]){
 
         dim3 dimGrid(grid_cols, grid_rows);
         dim3 dimBlock(tile_width,tile_width);
-        mult_matrix_tile<<<dimGrid,dimBlock>>>(d_a,d_b,d_c,m,n);
+        dimGrid.x /= 4
+        mult_matrix_tile_4<<<dimGrid,dimBlock>>>(d_a,d_b,d_c,m,n);
         //mult_matrix<<<dimGrid,dimBlock>>>(d_a,d_b,d_c,m,n);
         // add_3<<<n,1>>>(d_a,d_b,d_c,m,n);
 
